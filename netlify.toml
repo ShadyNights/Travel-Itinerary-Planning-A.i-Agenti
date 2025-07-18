@@ -1,0 +1,8 @@
+[build]
+  command = "npm run build" # Or "yarn build" or "pnpm build"
+  publish = "dist"          # The directory where Vite puts the build output
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
