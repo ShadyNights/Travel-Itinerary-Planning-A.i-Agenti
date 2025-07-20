@@ -1,14 +1,10 @@
-# netlify.toml
 [build]
-  publish = "dist" # Or your actual publish directory, e.g., "build"
   command = "npm run build" # Or your actual build command
+  publish = "dist" # Or your actual publish directory (where your built frontend code goes)
+  functions = "netlify/functions" # This tells Netlify where your functions are located
 
-[functions]
-  directory = "netlify/functions" # This tells Netlify where your functions are
-
-# Optional: If you want cleaner URLs for your functions (e.g., /api/itinerary instead of /.netlify/functions/generate-itinerary)
-# This also helps with local development using `netlify dev`
 [[redirects]]
-  from = "/api/generate-itinerary"
-  to = "/.netlify/functions/generate-itinerary"
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
   status = 200
+  # You had this in your config export, but it's more robust in netlify.toml for consistent routing.
