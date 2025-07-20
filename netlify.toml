@@ -1,8 +1,14 @@
+# netlify.toml
 [build]
-  command = "npm run build" # Or "yarn build" or "pnpm build"
-  publish = "dist"          # The directory where Vite puts the build output
+  publish = "dist" # Or your actual publish directory, e.g., "build"
+  command = "npm run build" # Or your actual build command
 
+[functions]
+  directory = "netlify/functions" # This tells Netlify where your functions are
+
+# Optional: If you want cleaner URLs for your functions (e.g., /api/itinerary instead of /.netlify/functions/generate-itinerary)
+# This also helps with local development using `netlify dev`
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from = "/api/generate-itinerary"
+  to = "/.netlify/functions/generate-itinerary"
   status = 200
