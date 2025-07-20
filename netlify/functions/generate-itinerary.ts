@@ -117,7 +117,10 @@ export default async (req: Request, context: Context) => {
   }
 };
 
+// IMPORTANT: Netlify Function configuration
+// This is the crucial line that was changed.
 export const config: Config = {
-    path: "/generate-itinerary",
+    // This path now explicitly matches the URL the frontend is calling.
+    path: "/.netlify/functions/generate-itinerary",
     method: ["POST"],
 };
