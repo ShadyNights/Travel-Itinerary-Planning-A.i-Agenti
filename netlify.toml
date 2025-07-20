@@ -1,25 +1,16 @@
 [build]
-  command = "npm run build" # Your actual build command for the frontend
-  publish = "dist"          # The directory where Vite puts the built frontend output (e.g., your React app)
+  command = "npm run build"
+  publish = "dist"
 
-# This section tells Netlify where to find your serverless functions
-# The path is relative to your project's root directory.
 [functions]
-  directory = "netlify/functions" # Assuming your functions are in 'your-project-root/netlify/functions/'
+  directory = "netlify/functions"
 
-# These are your redirect rules
 [[redirects]]
-  # This rule ensures that your single-page application (React)
-  # handles all routes, allowing direct deep links to work.
   from = "/*"
   to = "/index.html"
   status = 200
-  # force = true # You might need force = true if your frontend routes conflict with actual files
 
 [[redirects]]
-  # This rule creates a cleaner API endpoint for your function.
-  # Your frontend can then call /api/generate-itinerary instead of /.netlify/functions/generate-itinerary
-  # However, for now, keep your frontend calling the full path until this 404 is resolved.
   from = "/api/generate-itinerary"
   to = "/.netlify/functions/generate-itinerary"
   status = 200
