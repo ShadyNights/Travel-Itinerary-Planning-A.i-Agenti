@@ -1,9 +1,7 @@
 [build]
   command = "npm run build"
   publish = "dist"
-
-[functions]
-  directory = "netlify/functions"
+  functions = "netlify/functions" # This line should already be there
 
 [[redirects]]
   from = "/*"
@@ -11,6 +9,13 @@
   status = 200
 
 [[redirects]]
-  from = "/api/generate-itinerary"
-  to = "/.netlify/functions/generate-itinerary"
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
   status = 200
+
+# ADD THIS SECTION FOR FUNCTIONS CONFIGURATION
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["@google/generative-ai"] # Optional, but good practice for large modules
+  # If you explicitly want to tell it to bundle TS:
+  # Included_files = ["netlify/functions/**/*.ts"] # This is usually not needed as .ts is default handled
