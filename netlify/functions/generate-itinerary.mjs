@@ -1,31 +1,27 @@
 // netlify/functions/generate-itinerary.mjs
 
 import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from '@google/generative-ai';
-import { Config, Context } from '@netlify/functions'; // Keep this import for types
+// REMOVE THIS LINE: import { Config, Context } from '@netlify/functions';
 
-// Request and Response are global in Netlify Functions, so no need to import them
-// If your local IDE complains, you can add JSDoc for types:
+// You can add JSDoc for IDE type hints if you want, but it's not strictly necessary for runtime
 /**
  * @param {Request} req
- * @param {Context} context
+ * @param {import('@netlify/functions').Context} context
  */
-export default async (req, context) => { // REMOVE TYPE ANNOTATIONS HERE
+export default async (req, context) => {
   if (req.method !== 'POST') {
     return new Response('Method Not Allowed', { status: 405 });
   }
 
   try {
-    const requestBody = await req.json(); // Parse the entire request body
+    const requestBody = await req.json();
 
-    let prompt; // No need for explicit type annotation here either
+    let prompt;
 
-    // Determine if the input is from the detailed form or natural language
     if (requestBody.preferences) {
-      // Input from PlanningForm.tsx (detailed form)
       const preferences = requestBody.preferences;
       prompt = `Generate a detailed travel itinerary for a trip to ${preferences.destination} for ${preferences.duration} days. Include activities, estimated costs, and travel tips for each day. Also include weather information and emergency contacts for the destination. The user prefers ${preferences.travelStyle} style trips.`;
 
-      // Add optional fields if they exist
       if (preferences.interests && preferences.interests.length > 0) {
         prompt += ` User interests include: ${preferences.interests.join(', ')}.`;
       }
@@ -46,14 +42,10 @@ export default async (req, context) => { // REMOVE TYPE ANNOTATIONS HERE
       }
 
     } else if (requestBody.naturalLanguageQuery) {
-      // Input from NaturalLanguageInput.tsx (natural language)
       prompt = requestBody.naturalLanguageQuery;
-      // You might want to add a prefix to the natural language query for Gemini
-      // to ensure it understands it's an itinerary request, e.g.:
       prompt = `Create a travel itinerary based on this natural language request: ${prompt}`;
 
     } else {
-      // Neither expected input structure found
       console.error("Invalid request body structure:", requestBody);
       return new Response(JSON.stringify({
           error: 'Invalid input format. Please provide valid preferences or a natural language query.'
@@ -63,9 +55,7 @@ export default async (req, context) => { // REMOVE TYPE ANNOTATIONS HERE
       });
     }
 
-    // Add the strict JSON format instruction at the end of the prompt
     prompt += ` Respond in a strict JSON format with keys: destination, duration, days (array of objects with dayNumber, date, activities (array of objects with name, description, time, cost), weather, travelTips, emergencyInfo).`;
-
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -74,7 +64,7 @@ export default async (req, context) => { // REMOVE TYPE ANNOTATIONS HERE
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // You can change this to "gemini-pro" later if 503 errors persist
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const safetySettings = [
         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -91,7 +81,7 @@ export default async (req, context) => { // REMOVE TYPE ANNOTATIONS HERE
 
     let geminiResponseText = result.response.text();
 
-    const cleanJsonString = (jsonString) => { // No need for explicit type annotation here either
+    const cleanJsonString = (jsonString) => {
         const jsonMatch = jsonString.match(/```json\n([\s\S]*?)\n```/);
         return jsonMatch ? jsonMatch[1] : jsonString;
     };
@@ -106,7 +96,6 @@ export default async (req, context) => { // REMOVE TYPE ANNOTATIONS HERE
 
   } catch (error) {
     console.error('Netlify Function execution error:', error);
-    // Log the full error object for better debugging on Netlify logs
     if (error instanceof Error) {
         console.error('Error name:', error.name);
         console.error('Error message:', error.message);
@@ -124,9 +113,8 @@ export default async (req, context) => { // REMOVE TYPE ANNOTATIONS HERE
 };
 
 // IMPORTANT: Netlify Function configuration
-// This is the crucial line that was changed.
-export const config = { // No need for Config type annotation here for bundling
-    // This path now explicitly matches the URL the frontend is calling.
+// No need for Config type annotation here for bundling in .mjs
+export const config = {
     path: "/.netlify/functions/generate-itinerary",
     method: ["POST"],
 };
