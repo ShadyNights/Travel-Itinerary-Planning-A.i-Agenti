@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "@netlify/functions": "^2.6.0",  <-- ADDED THIS LINE
+    "@netlify/functions": "^2.6.0",  
     "axios": "^1.10.0",
     "date-fns": "^4.1.0",
     "firebase": "^12.0.0",    
