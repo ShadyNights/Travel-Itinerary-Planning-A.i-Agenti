@@ -1,10 +1,15 @@
-// netlify/functions/generate-itinerary.ts
+// netlify/functions/generate-itinerary.mjs
 
 import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from '@google/generative-ai';
-// CHANGE THIS LINE: Remove the 'type' keyword
-import { Config, Context } from '@netlify/functions'; 
+import { Config, Context } from '@netlify/functions'; // Keep this import for types
 
-export default async (req: Request, context: Context) => {
+// Request and Response are global in Netlify Functions, so no need to import them
+// If your local IDE complains, you can add JSDoc for types:
+/**
+ * @param {Request} req
+ * @param {Context} context
+ */
+export default async (req, context) => { // REMOVE TYPE ANNOTATIONS HERE
   if (req.method !== 'POST') {
     return new Response('Method Not Allowed', { status: 405 });
   }
@@ -12,7 +17,7 @@ export default async (req: Request, context: Context) => {
   try {
     const requestBody = await req.json(); // Parse the entire request body
 
-    let prompt: string;
+    let prompt; // No need for explicit type annotation here either
 
     // Determine if the input is from the detailed form or natural language
     if (requestBody.preferences) {
@@ -86,7 +91,7 @@ export default async (req: Request, context: Context) => {
 
     let geminiResponseText = result.response.text();
 
-    const cleanJsonString = (jsonString: string): string => {
+    const cleanJsonString = (jsonString) => { // No need for explicit type annotation here either
         const jsonMatch = jsonString.match(/```json\n([\s\S]*?)\n```/);
         return jsonMatch ? jsonMatch[1] : jsonString;
     };
@@ -120,7 +125,7 @@ export default async (req: Request, context: Context) => {
 
 // IMPORTANT: Netlify Function configuration
 // This is the crucial line that was changed.
-export const config: Config = {
+export const config = { // No need for Config type annotation here for bundling
     // This path now explicitly matches the URL the frontend is calling.
     path: "/.netlify/functions/generate-itinerary",
     method: ["POST"],
