@@ -1,7 +1,8 @@
 // netlify/functions/generate-itinerary.ts
 
 import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from '@google/generative-ai';
-import type { Config, Context } from '@netlify/functions';
+// CHANGE THIS LINE: Remove the 'type' keyword
+import { Config, Context } from '@netlify/functions'; 
 
 export default async (req: Request, context: Context) => {
   if (req.method !== 'POST') {
@@ -68,7 +69,7 @@ export default async (req: Request, context: Context) => {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // You can change this to "gemini-pro" later if 503 errors persist
 
     const safetySettings = [
         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
