@@ -63,8 +63,8 @@ export default async (req, context) => {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    // CHANGED MODEL HERE FROM "gemini-1.5-flash" to "gemini-pro"
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" }); 
+    // CHANGED MODEL HERE FROM "gemini-pro" to "gemini-1.5-pro"
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" }); 
 
     const safetySettings = [
         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
