@@ -116,8 +116,7 @@ export default async (req, context) => {
 
     const genAI = new GoogleGenerativeAI(apiKey);
     // Setting model to gemini-1.5-flash as requested.
-    // Be aware that achieving highly complex, consistently structured output may be challenging with this model.
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // <--- CHANGED TO FLASH
 
     const safetySettings = [
         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -145,7 +144,6 @@ export default async (req, context) => {
     const parsedItinerary = JSON.parse(geminiResponseText);
 
     // --- Frontend Data Cleaning (This is a safety net; the prompt is now the primary focus) ---
-    // Update this cleaning function to match the new, more detailed JSON structure
     const cleanItineraryForFrontend = (itinerary) => {
         if (!itinerary) return null;
 
@@ -176,7 +174,11 @@ export default async (req, context) => {
                 day.dailyWeather.condition = day.dailyWeather.condition || 'N/A';
                 day.dailyWeather.weatherTip = day.dailyWeather.weatherTip || 'N/A';
 
-                day.dailyTips = Array.isArray(day.dailyTips) ? day.dailyTips : []; // This was `dailyTips`, now `essentialTravelTips`
+                // Check if dailyTips is correctly named. Your prompt now uses "essentialTravelTips" for top-level,
+                // and there's no "dailyTips" field defined in the prompt for each day's object.
+                // I'm assuming you meant to have it at the top level, or will add it to the prompt.
+                // If you *do* want dailyTips per day, add it to the prompt structure.
+                day.dailyTips = Array.isArray(day.dailyTips) ? day.dailyTips : []; 
                 day.daySummary = day.daySummary || 'N/A';
 
                 if (day.activities && Array.isArray(day.activities)) {
@@ -233,6 +235,7 @@ export default async (req, context) => {
 
 // IMPORTANT: Netlify Function configuration
 export const config = {
-    path: "/.netlify/functions/generate-itinerary",
+    // This path should just be the function name without /netlify/functions/
+    path: "/generate-itinerary", // <--- CRITICAL CHANGE HERE
     method: ["POST"],
 };
