@@ -1,21 +1,25 @@
+# netlify.toml
+
 [build]
   command = "npm run build"
   publish = "dist"
-  functions = "netlify/functions" # This line should already be there
+  functions = "netlify/functions"
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+# REMOVE OR COMMENT OUT THIS BLOCK IF YOUR FRONTEND CALLS `/.netlify/functions/generate-itinerary` DIRECTLY
+# [[redirects]]
+#   from = "/api/*"
+#   to = "/.netlify/functions/:splat"
+#   status = 200
 
-# ADD THIS SECTION FOR FUNCTIONS CONFIGURATION
+# Functions configuration
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["@google/generative-ai"] # Optional, but good practice for large modules
-  # If you explicitly want to tell it to bundle TS:
-  # Included_files = ["netlify/functions/**/*.ts"] # This is usually not needed as .ts is default handled
+  # Optional: If you have large dependencies, list them here to be external
+  # external_node_modules = ["@google/generative-ai"] 
+  # This setting is usually for TypeScript functions, if you're using .mjs, it's not strictly needed
+  # included_files = ["netlify/functions/**/*.ts"]
