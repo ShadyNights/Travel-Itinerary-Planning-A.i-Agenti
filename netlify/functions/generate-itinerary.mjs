@@ -82,7 +82,7 @@ export default async (req, context) => {
     const genAI = new GoogleGenerativeAI(apiKey);
     // You can revert to "gemini-1.5-flash" if you prefer that model and the 503s were truly transient.
     // For now, let's stick with "gemini-1.5-pro" as it's generally more robust for complex instructions.
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" }); 
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
 
     const safetySettings = [
         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
