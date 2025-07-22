@@ -1,28 +1,70 @@
 import React from 'react';
-import { ArrowLeft, Save, Calendar, MapPin, Clock, DollarSign, Star, Download, Share2, Cloud, Thermometer, Sun, Moon } from 'lucide-react'; // Added Sun, Moon for time slots
+import { ArrowLeft, Save, Calendar, MapPin, Clock, DollarSign, Star, Download, Share2, Cloud, Thermometer, Sun, Moon, Sunset, Info } from 'lucide-react'; // Added Sunset, Info for improved icons
 import { TravelPlan, Activity } from '../types/travel';
-import { pdfService } from '../services/pdfService';
+import { pdfService } from '../services/pdfService'; // Assuming pdfService exists and is correctly implemented
+import { format } from 'date-fns'; // Import date-fns for date formatting
 
 interface ItineraryResultsProps {
-  itinerary: TravelPlan;
+  itinerary: TravelPlan | null; // Allow itinerary to be null initially
   onSaveItinerary: (itinerary: TravelPlan) => void;
   onBackToPlanning: () => void;
   onBackToHome: () => void;
+  isLoading: boolean; // Added for loading state management (though not directly used in this component, useful for parent)
+  error: string | null; // Added for error display (useful if parent passes this)
 }
 
 const ItineraryResults: React.FC<ItineraryResultsProps> = ({
   itinerary,
   onSaveItinerary,
   onBackToPlanning,
-  onBackToHome
+  onBackToHome,
+  isLoading, // Destructure new prop
+  error // Destructure new prop
 }) => {
+
+  // Handle case where itinerary is not yet available or there's an error
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <p className="text-xl text-slate-700">Generating your itinerary, please wait...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-red-50 p-8">
+        <p className="text-xl text-red-700 mb-4">Error: {error}</p>
+        <button
+          onClick={onBackToPlanning}
+          className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-200"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  if (!itinerary) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-8">
+        <p className="text-xl text-slate-700 mb-4">No itinerary to display. Please plan a trip first.</p>
+        <button
+          onClick={onBackToHome}
+          className="px-6 py-3 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white rounded-lg transition-all duration-200"
+        >
+          Go to Home
+        </button>
+      </div>
+    );
+  }
+
   const handlePDFExport = async () => {
     try {
       await pdfService.exportItineraryToPDF(itinerary);
-      // Optional: Add a small success toast/message here instead of alert
+      alert('Itinerary exported to PDF successfully!'); // Providing user feedback
     } catch (error) {
       console.error('Error exporting PDF:', error);
-      // More informative error message
       alert('Failed to export PDF. Please ensure pop-ups are allowed or try again.');
     }
   };
@@ -36,10 +78,14 @@ const ItineraryResults: React.FC<ItineraryResultsProps> = ({
           text: `Check out my ${itinerary.duration}-day trip to ${itinerary.destination} planned with TravelAI!`,
           url: window.location.href, // Shares the current page URL
         });
-        // Optional: Add a success message after sharing
+        // No alert needed, native share UI provides feedback
       } catch (error) {
         // User cancelled the share operation or other error
         console.error('Error sharing:', error);
+        // Do not alert for user cancelling, only for actual errors
+        if ((error as DOMException).name !== 'AbortError') { // Common error when user cancels
+          alert('Failed to share itinerary. Please try again.');
+        }
       }
     } else {
       // Fallback for browsers that don't support Web Share API: copy to clipboard
@@ -53,7 +99,7 @@ const ItineraryResults: React.FC<ItineraryResultsProps> = ({
     }
   };
 
-  const getCategoryColor = (category: Activity['category']) => {
+  const getCategoryColor = (category: Activity['category'] | undefined) => { // Accept undefined category
     const colors = {
       culture: 'bg-purple-100 text-purple-700 border-purple-200',
       adventure: 'bg-green-100 text-green-700 border-green-200',
@@ -62,27 +108,26 @@ const ItineraryResults: React.FC<ItineraryResultsProps> = ({
       sightseeing: 'bg-pink-100 text-pink-700 border-pink-200',
       shopping: 'bg-indigo-100 text-indigo-700 border-indigo-200',
       nature: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-      // Add default if 'transport' or other categories are possible from AI
       transport: 'bg-gray-100 text-gray-700 border-gray-200',
-      // Ensure a robust fallback if category is unexpected
-      default: 'bg-gray-100 text-gray-700 border-gray-200' 
+      // Ensure a robust fallback if category is unexpected or undefined
+      default: 'bg-gray-100 text-gray-700 border-gray-200'
     };
-    // Use type assertion to ensure category is a key of colors, or fallback to default
-    return colors[category as keyof typeof colors] || colors.default;
+    // Use optional chaining and nullish coalescing for safer access
+    return colors[category as keyof typeof colors] ?? colors.default;
   };
 
-  const getTimeSlotIcon = (timeSlot: Activity['timeSlot']) => {
+  const getTimeSlotIcon = (timeSlot: Activity['timeSlot'] | undefined) => { // Accept undefined timeSlot
     switch (timeSlot) {
       case 'morning':
-        return <Sun className="h-4 w-4" />;
+        return <Sun className="h-4 w-4 text-orange-400" />; // Added color for sun
       case 'afternoon':
-        return <Sun className="h-4 w-4" />; // Could be a slightly different sun icon
+        return <Sunset className="h-4 w-4 text-orange-600" />; // Used Sunset for afternoon
       case 'evening':
-        return <Cloud className="h-4 w-4" />; // Or a sunset icon if available
+        return <Cloud className="h-4 w-4 text-blue-400" />; // Could be a slightly different icon/color
       case 'night':
-        return <Moon className="h-4 w-4" />;
+        return <Moon className="h-4 w-4 text-indigo-600" />;
       default:
-        return <Clock className="h-4 w-4" />; // Default clock icon
+        return <Clock className="h-4 w-4 text-slate-500" />; // Default clock icon
     }
   };
 
@@ -171,9 +216,9 @@ const ItineraryResults: React.FC<ItineraryResultsProps> = ({
               </div>
               <div>
                 <p className="text-sm text-slate-500">Estimated Budget</p>
-                {/* Format currency for better presentation */}
+                {/* Format currency for better presentation. Use optional chaining for totalBudget */}
                 <p className="font-semibold text-slate-800">
-                  {itinerary.totalBudget.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                  {itinerary.totalBudget?.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) || 'N/A'}
                 </p>
               </div>
             </div>
@@ -184,7 +229,7 @@ const ItineraryResults: React.FC<ItineraryResultsProps> = ({
               </div>
               <div>
                 <p className="text-sm text-slate-500">Travel Style</p>
-                <p className="font-semibold text-slate-800 capitalize">{itinerary.preferences.travelStyle}</p>
+                <p className="font-semibold text-slate-800 capitalize">{itinerary.preferences?.travelStyle || 'N/A'}</p> {/* Use optional chaining for preferences */}
               </div>
             </div>
           </div>
@@ -210,7 +255,7 @@ const ItineraryResults: React.FC<ItineraryResultsProps> = ({
               {itinerary.travelTips.map((tip, index) => (
                 <div key={index} className="flex items-start space-x-2">
                   <div className="w-6 h-6 bg-amber-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-amber-800 text-xs font-bold">{index + 1}</span>
+                    <Info className="h-4 w-4 text-amber-800" /> {/* Changed to Info icon for tips */}
                   </div>
                   <p className="text-slate-700 text-sm">{tip}</p>
                 </div>
@@ -226,19 +271,22 @@ const ItineraryResults: React.FC<ItineraryResultsProps> = ({
             <div key={day.day} className="bg-white rounded-2xl shadow-xl overflow-hidden">
               <div className="bg-gradient-to-r from-sky-500 to-blue-600 text-white p-6">
                 <h3 className="text-2xl font-bold mb-2">Day {day.day}</h3>
-                <p className="text-sky-100">{day.date}</p>
+                {/* Use date-fns for consistent date formatting if day.date is a Date string */}
+                <p className="text-sky-100">
+                  {day.date ? format(new Date(day.date), 'EEEE, MMMM do, yyyy') : 'Date N/A'}
+                </p>
                 {day.weather && (
                   <div className="flex items-center space-x-4 mt-2 text-sky-100">
                     <div className="flex items-center space-x-1">
                       <Thermometer className="h-4 w-4" />
                       {/* Using optional chaining for nested properties */}
                       <span className="text-sm">
-                        {day.weather.temperature?.min}° - {day.weather.temperature?.max}°C
+                        {day.weather.temperature?.min !== undefined ? `${day.weather.temperature.min}°` : 'N/A'} - {day.weather.temperature?.max !== undefined ? `${day.weather.temperature.max}°C` : 'N/A'}
                       </span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Cloud className="h-4 w-4" />
-                      <span className="text-sm capitalize">{day.weather.condition}</span>
+                      <span className="text-sm capitalize">{day.weather.condition || 'N/A'}</span>
                     </div>
                   </div>
                 )}
@@ -265,21 +313,27 @@ const ItineraryResults: React.FC<ItineraryResultsProps> = ({
                 )}
                 
                 <div className="space-y-4">
+                  {day.activities?.length === 0 && ( // Display message if no activities for the day
+                    <p className="text-slate-500 italic">No activities planned for this day.</p>
+                  )}
                   {day.activities?.map((activity) => ( 
-                    <div key={activity.id} className="border border-slate-200 rounded-xl p-4 hover:shadow-md transition-all duration-200">
+                    // Using a more robust key if activity.id is not guaranteed unique/present
+                    <div key={activity.id || `${day.day}-${activity.name}-${activity.timeSlot || 'no-slot'}`} className="border border-slate-200 rounded-xl p-4 hover:shadow-md transition-all duration-200">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
                             {getTimeSlotIcon(activity.timeSlot)} {/* Render Lucide icon component */}
                             <h4 className="text-lg font-semibold text-slate-800">{activity.name}</h4>
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getCategoryColor(activity.category)}`}>
-                              {activity.category}
-                            </span>
+                            {activity.category && ( // Only render if category exists
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getCategoryColor(activity.category)}`}>
+                                {activity.category}
+                              </span>
+                            )}
                             {activity.weatherConsideration && (
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 activity.weatherConsideration === 'indoor' ? 'bg-gray-100 text-gray-700' :
                                 activity.weatherConsideration === 'outdoor' ? 'bg-green-100 text-green-700' :
-                                'bg-yellow-100 text-yellow-700'
+                                'bg-yellow-100 text-yellow-700' // Fallback for unknown consideration
                               }`}>
                                 {activity.weatherConsideration}
                               </span>
@@ -287,22 +341,28 @@ const ItineraryResults: React.FC<ItineraryResultsProps> = ({
                           </div>
                           <p className="text-slate-600 mb-2">{activity.description}</p>
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-500"> {/* Added flex-wrap for smaller screens */}
-                            <div className="flex items-center space-x-1">
-                              <Clock className="h-4 w-4" />
-                              <span>{activity.duration}</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <MapPin className="h-4 w-4" />
-                              <span>{activity.location}</span>
-                            </div>
+                            {activity.duration && ( // Only display if duration exists
+                              <div className="flex items-center space-x-1">
+                                <Clock className="h-4 w-4" />
+                                <span>{activity.duration}</span>
+                              </div>
+                            )}
+                            {activity.location && ( // Only display if location exists
+                              <div className="flex items-center space-x-1">
+                                <MapPin className="h-4 w-4" />
+                                <span>{activity.location}</span>
+                              </div>
+                            )}
                             <div className="flex items-center space-x-1">
                               <DollarSign className="h-4 w-4" />
                               {/* Format activity cost as currency */}
                               <span>
-                                {activity.estimatedCost?.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) || 'N/A'}
+                                {activity.estimatedCost !== undefined && activity.estimatedCost !== null
+                                  ? activity.estimatedCost.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+                                  : 'N/A'}
                               </span>
                             </div>
-                            {activity.rating && (
+                            {activity.rating !== undefined && activity.rating !== null && ( // Only display if rating exists
                               <div className="flex items-center space-x-1">
                                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                                 <span>{activity.rating}/5</span>
@@ -332,7 +392,7 @@ const ItineraryResults: React.FC<ItineraryResultsProps> = ({
         </div>
 
         {/* Emergency Information */}
-        {itinerary.emergencyInfo && (
+        {itinerary.emergencyInfo && ( // Check if emergencyInfo object exists
           <div className="bg-red-50 rounded-2xl shadow-xl p-6 mt-8">
             <h2 className="text-2xl font-bold text-red-800 mb-6">Emergency Information</h2>
             <div className="grid md:grid-cols-3 gap-6">
