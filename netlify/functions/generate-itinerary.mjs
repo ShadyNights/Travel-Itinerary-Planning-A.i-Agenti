@@ -24,12 +24,16 @@ export default async (req, context) => {
       // Add specific preference details to the prompt
       if (preferences.travelStyle) {
         prompt += ` The user prefers a ${preferences.travelStyle} style trip.`;
+      } else {
+        prompt += ` Please infer a suitable travel style based on the destination and common travel preferences.`;
       }
       if (preferences.interests && preferences.interests.length > 0) {
         prompt += ` User interests include: ${preferences.interests.join(', ')}.`;
       }
       if (preferences.budget) {
         prompt += ` Budget: ${preferences.budget}.`;
+      } else {
+        prompt += ` Please provide a general estimated budget range for the trip (e.g., "Low", "Medium", "High", or "1500-2500 EUR").`;
       }
       if (preferences.groupSize) {
         prompt += ` Group size: ${preferences.groupSize} people.`;
@@ -45,7 +49,7 @@ export default async (req, context) => {
       }
 
     } else if (requestBody.naturalLanguageQuery) {
-      prompt = `Create a travel itinerary based on this natural language request: ${requestBody.naturalLanguageQuery}`;
+      prompt = `Create a detailed travel itinerary based on this natural language request: ${requestBody.naturalLanguageQuery}`;
 
     } else {
       console.error("Invalid request body structure:", requestBody);
@@ -57,19 +61,26 @@ export default async (req, context) => {
       });
     }
 
-    // IMPORTANT: Make the JSON format request much more explicit and detailed for the AI
-    prompt += ` Respond in a strict JSON format. Ensure all fields are populated and follow the specified types.
-    The top-level keys should be: "destination" (string), "duration" (number of days), "estimatedBudget" (string, e.g., "500-1000 USD" or "Low/Medium/High"), "travelStyle" (string, if provided in preferences, otherwise infer), "emergencyInfo" (array of strings, e.g., "Emergency Services: 112", "Embassy: [Contact]").
-    There should be a "days" key which is an array of objects. Each day object must have the following keys:
+    // --- CRITICAL: Make the JSON format request much more explicit and demanding for the AI ---
+    // Emphasize populating ALL fields with realistic, inferred data if not explicitly provided.
+    prompt += ` Respond in a strict JSON format. It is crucial that you ensure ALL fields are populated, even if you need to infer reasonable values based on the destination and trip duration. Do NOT leave any field as "N/A" or empty unless truly impossible to infer.
+    The top-level JSON object must have these keys:
+    - "destination" (string)
+    - "duration" (number of days)
+    - "estimatedBudget" (string, e.g., "1500-2500 EUR for 5 days" or "Moderate budget". Infer if not provided.)
+    - "travelStyle" (string, e.g., "Romantic", "Cultural", "Adventurous". Infer if not provided.)
+    - "emergencyInfo" (array of strings, e.g., ["Emergency Services: 112", "Local Police: 17", "Country Code: +33", "US Embassy Paris: +33 1 43 12 22 22"]. Provide relevant info for the destination.)
+    
+    The "days" key must be an array of objects. Each day object must have the following keys:
     - "dayNumber" (number, starting from 1)
-    - "date" (string, in YYYY-MM-DD format, or a readable format like "Monday, July 22nd, 2024")
-    - "weather" (string, e.g., "Sunny, 25°C", based on location/time of year)
-    - "dailyTips" (array of strings, specific to the day's activities)
-    - "activities" (array of objects, each activity object must have:
-        - "name" (string)
-        - "description" (string)
-        - "time" (string, e.g., "9:00 AM - 11:00 AM" or "Morning")
-        - "cost" (string, e.g., "25 EUR" or "Free" or "Moderate")
+    - "date" (string, in a clear, readable format like "Thursday, December 26th, 2024". Infer dates based on trip duration and start date.)
+    - "weather" (string, e.g., "Partly cloudy, 10°C", "Rainy, 7°C". Provide a realistic weather summary for the inferred date and destination.)
+    - "dailyTips" (array of strings, provide 2-3 specific tips relevant to the day's activities, e.g., "Wear comfortable shoes", "Book tickets in advance").
+    - "activities" (array of objects, provide 3-4 distinct activities for each day, ensuring variety and logical flow. Each activity object must have:
+        - "name" (string, e.g., "Eiffel Tower Visit")
+        - "description" (string, a brief sentence or two, e.g., "Ascend the iconic tower for panoramic city views.")
+        - "time" (string, a specific time range like "9:00 AM - 11:00 AM" or a time of day like "Morning").
+        - "cost" (string, an estimated cost like "25 EUR", "Free", "Moderate", "High").
     ).`;
 
 
@@ -80,9 +91,9 @@ export default async (req, context) => {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    // You can revert to "gemini-1.5-flash" if you prefer that model and the 503s were truly transient.
-    // For now, let's stick with "gemini-1.5-pro" as it's generally more robust for complex instructions.
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
+    // Sticking with "gemini-1.5-pro" as it's better at following complex instructions.
+    // Be mindful of your free-tier quota for this model.
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" }); 
 
     const safetySettings = [
         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -109,12 +120,7 @@ export default async (req, context) => {
     // Parse the response
     const parsedItinerary = JSON.parse(geminiResponseText);
 
-    // --- IMPORTANT Frontend Data Cleaning (Add this to the FE or BE if you prefer) ---
-    // This part is crucial for making the data robust for your frontend.
-    // I recommend putting this *in your frontend* right after you receive the JSON,
-    // but I'm including it here in the function for completeness if you want to
-    // process it before sending to the frontend.
-    // If you add this to the frontend, remove it from here.
+    // --- Frontend Data Cleaning (This is a safety net; the prompt is now the primary focus) ---
     const cleanItineraryForFrontend = (itinerary) => {
         if (!itinerary) return null;
 
