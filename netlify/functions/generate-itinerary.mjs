@@ -2,7 +2,6 @@
 
 import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from '@google/generative-ai';
 
-// You can add JSDoc for IDE type hints if you want, but it's not strictly necessary for runtime
 /**
  * @param {Request} req
  * @param {import('@netlify/functions').Context} context
@@ -63,8 +62,9 @@ export default async (req, context) => {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    // CHANGED MODEL HERE FROM "gemini-pro" to "gemini-1.5-pro"
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" }); 
+    // REVERTING TO ORIGINAL MODEL, hoping the 503 was temporary.
+    // If 503 persists, we might need to find a different name for 1.5 flash, like 'gemini-1.5-flash-latest' if it exists.
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
 
     const safetySettings = [
         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
