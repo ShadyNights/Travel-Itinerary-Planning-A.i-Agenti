@@ -1,7 +1,6 @@
 // netlify/functions/generate-itinerary.mjs
 
 import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from '@google/generative-ai';
-// REMOVE THIS LINE: import { Config, Context } from '@netlify/functions';
 
 // You can add JSDoc for IDE type hints if you want, but it's not strictly necessary for runtime
 /**
@@ -64,7 +63,8 @@ export default async (req, context) => {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // CHANGED MODEL HERE FROM "gemini-1.5-flash" to "gemini-pro"
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" }); 
 
     const safetySettings = [
         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -113,7 +113,6 @@ export default async (req, context) => {
 };
 
 // IMPORTANT: Netlify Function configuration
-// No need for Config type annotation here for bundling in .mjs
 export const config = {
     path: "/.netlify/functions/generate-itinerary",
     method: ["POST"],
