@@ -53,7 +53,7 @@ export default async (req, context) => {
       });
     }
 
-    prompt += ` Respond in a strict JSON format with keys: destination, duration, days (array of objects with dayNumber, date, activities (array of objects with name, description, time, cost), weather, travelTips, emergencyInfo).`;
+    prompt += ` Respond in a strict JSON format with keys: destination, duration, days (array of objects with dayNumber, date, activities (array of objects with name, description, time, cost), weather, travelTips (array of strings), emergencyInfo (array of strings)).`;
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
